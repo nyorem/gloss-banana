@@ -23,7 +23,6 @@ source-repository head
 library
   ghc-options:         -Wall
   exposed-modules:     Graphics.Gloss.Interface.FRP.ReactiveBanana
-  other-extensions:    RankNTypes
   build-depends:       base >=4.6 && <4.9,
                        gloss >=1.8 && <1.10,
                        reactive-banana >=0.8 && <1.1

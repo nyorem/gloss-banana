@@ -1,5 +1,3 @@
-{-# LANGUAGE Rank2Types #-}
-
 module Graphics.Gloss.Interface.FRP.ReactiveBanana (playBanana, InputEvent) where
 
 import Graphics.Gloss hiding (display)
