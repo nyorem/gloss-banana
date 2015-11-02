@@ -19,15 +19,14 @@ type InputEvent = G.Event
 playBanana :: Display -- ^ The display method
            -> Color   -- ^ The background colour
            -> Int     -- ^ The refresh rate, in Hertz
-           -> (forall t. Frameworks t
-              => Event t ()
-              -> Behavior t Float
-              -> Event t InputEvent
-              -> Moment t (Behavior t Picture))
-           -- ^ A Moment t action to generate the Picture Behavior, taking
-           --   the refresh and input Events with respect to which to build it.
-           --   The refresh event generates a Float indicating the time delta
-           --   since the last refresh.
+           -> (Event ()
+              -> Behavior Float
+              -> Event InputEvent
+              -> MomentIO (Behavior Picture))
+            -- ^ A Moment action to generate the Picture Behavior, taking
+            --   the refresh and input Events with respect to which to build it.
+            --   The refresh event generates a Float indicating the time delta
+            --   since the last refresh.
            -> IO ()
 playBanana display colour frequency mPicture = do
   pictureref <- newIORef blank
@@ -45,16 +44,19 @@ playBanana display colour frequency mPicture = do
     makeNetwork tickHandler eventHandler change = do
       eTick  <- fromAddHandler tickHandler
       eEvent <- fromAddHandler eventHandler
+      accumTicks  <- accumB 0 $ (+) <$> eTick
       bRawPicture <- mPicture (() <$ eTick)
-                              (accumB 0 $ (+) <$> eTick)
+                              accumTicks
                               eEvent
 
       -- make sure the Behavior doesn't leak memory if mPicture ignores
       -- one or both kind of events
+      stepTicks  <- stepper undefined eTick
+      stepEvents <- stepper undefined eEvent
       let bPicture = bRawPicture
-                  <* stepper undefined eTick
-                  <* stepper undefined eEvent
+                  <* stepTicks
+                  <* stepEvents
 
       changes bPicture >>= reactimate' . fmap (fmap change)
-      initial bPicture >>= liftIO . change
+      -- initial bPicture >>= liftIO . change
 
